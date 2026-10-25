@@ -26,15 +26,15 @@ public class FloatingService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        // 1. Inicializar SharedPreferences y forzar todas las funciones en falso (apagadas) por defecto
+        // 1. Inicializar SharedPreferences y forzar todas las funciones en verdadero (activadas) por defecto
         prefs = getSharedPreferences("MthSettings", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         
-        if (!prefs.contains("pref_aimbot")) editor.putBoolean("pref_aimbot", false);
-        if (!prefs.contains("pref_aim_assist")) editor.putBoolean("pref_aim_assist", false);
-        if (!prefs.contains("pref_show_fov")) editor.putBoolean("pref_show_fov", false);
-        if (!prefs.contains("pref_show_line")) editor.putBoolean("pref_show_line", false);
-        if (!prefs.contains("pref_no_recoil")) editor.putBoolean("pref_no_recoil", false);
+        if (!prefs.contains("pref_aimbot")) editor.putBoolean("pref_aimbot", true);
+        if (!prefs.contains("pref_aim_assist")) editor.putBoolean("pref_aim_assist", true);
+        if (!prefs.contains("pref_show_fov")) editor.putBoolean("pref_show_fov", true);
+        if (!prefs.contains("pref_show_line")) editor.putBoolean("pref_show_line", true);
+        if (!prefs.contains("pref_no_recoil")) editor.putBoolean("pref_no_recoil", true);
         editor.apply();
 
         // 2. Inflar el diseño del menú flotante
@@ -59,7 +59,7 @@ public class FloatingService extends Service {
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         windowManager.addView(floatingView, params);
 
-        // 3. Conectar cada switch y asegurar que arranquen apagados
+        // 3. Conectar cada switch y asegurar que arranquen activados
         setupSwitch(floatingView.findViewById(R.id.switch_aimbot), "pref_aimbot");
         setupSwitch(floatingView.findViewById(R.id.switch_aim_assist), "pref_aim_assist");
         setupSwitch(floatingView.findViewById(R.id.switch_show_fov), "pref_show_fov");
@@ -69,8 +69,8 @@ public class FloatingService extends Service {
 
     private void setupSwitch(Switch sw, String key) {
         if (sw != null) {
-            // Forzar estado inicial con el valor guardado (por defecto false)
-            sw.setChecked(prefs.getBoolean(key, false));
+            // Forzar estado inicial con el valor guardado (por defecto true)
+            sw.setChecked(prefs.getBoolean(key, true));
             sw.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 prefs.edit().putBoolean(key, isChecked).apply();
             });
@@ -84,4 +84,4 @@ public class FloatingService extends Service {
             windowManager.removeView(floatingView);
         }
     }
-                    }
+}
