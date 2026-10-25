@@ -1,76 +1,82 @@
 package com.mthfamily.app;
 
-import android.animation.ValueAnimator;
-import android.content.Context;
-import android.graphics.*;
+import android.app.Service;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.PixelFormat;
+import android.os.Build;
+import android.os.IBinder;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.animation.LinearInterpolator;
+import android.view.WindowManager;
+import android.widget.Switch;
+import android.widget.Toast;
 
-public class LogoView extends View {
-    private final boolean tile;
-    private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG), dark = new Paint(Paint.ANTI_ALIAS_FLAG),
-            disc = new Paint(Paint.ANTI_ALIAS_FLAG), ring3 = new Paint(Paint.ANTI_ALIAS_FLAG),
-            ring1 = new Paint(Paint.ANTI_ALIAS_FLAG), t1 = new Paint(Paint.ANTI_ALIAS_FLAG),
-            t2 = new Paint(Paint.ANTI_ALIAS_FLAG), bg = new Paint(Paint.ANTI_ALIAS_FLAG),
-            bd = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Path big = new Path(), small = new Path();
-    private float angle;
-    private ValueAnimator anim;
+public class FloatingService extends Service {
+    private WindowManager windowManager;
+    private View floatingView;
+    private SharedPreferences prefs;
 
-    public LogoView(Context c, boolean tile, int alpha) {
-        super(c);
-        this.tile = tile;
-        for (Paint p : new Paint[]{fill, ring3, ring1, t1, t2}) { p.setColor(Color.WHITE); p.setAlpha(alpha); }
-        ring3.setStyle(Paint.Style.STROKE); ring3.setStrokeWidth(3.2f);
-        ring1.setStyle(Paint.Style.STROKE); ring1.setStrokeWidth(1f);
-        dark.setColor(0xFF080808); dark.setStrokeWidth(1.2f);
-        disc.setColor(0xFF080808);
-        bg.setColor(0xFF080808);
-        bd.setColor(0xFFFFFFFF); bd.setStyle(Paint.Style.STROKE);
-        t1.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD)); t1.setTextSize(28); t1.setTextAlign(Paint.Align.CENTER); t1.setLetterSpacing(0.07f);
-        t2.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD)); t2.setTextSize(9); t2.setTextAlign(Paint.Align.CENTER); t2.setLetterSpacing(0.44f);
-        big.moveTo(-7, -68); big.lineTo(0, -98); big.lineTo(7, -68); big.close();
-        small.moveTo(-5, -68); small.lineTo(0, -87); small.lineTo(5, -68); small.close();
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 
-    @Override protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        anim = ValueAnimator.ofFloat(0, 360);
-        anim.setDuration(24000); anim.setInterpolator(new LinearInterpolator()); anim.setRepeatCount(ValueAnimator.INFINITE);
-        anim.addUpdateListener(v -> { angle = (float) v.getAnimatedValue(); invalidate(); });
-        anim.start();
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        // 1. Inicializar SharedPreferences solo para Aim Assist y No Recoil
+        prefs = getSharedPreferences("MthSettings", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        
+        if (!prefs.contains("pref_aim_assist")) editor.putBoolean("pref_aim_assist", false);
+        if (!prefs.contains("pref_no_recoil")) editor.putBoolean("pref_no_recoil", false);
+        editor.apply();
+
+        // 2. Inflar el diseño del menú flotante
+        floatingView = LayoutInflater.from(this).inflate(R.layout.floating_layout, null);
+
+        int layoutType = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                : WindowManager.LayoutParams.TYPE_PHONE;
+
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                layoutType,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT
+        );
+
+        params.gravity = Gravity.TOP | Gravity.START;
+        params.x = 100;
+        params.y = 100;
+
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        windowManager.addView(floatingView, params);
+
+        // 3. Conectar únicamente los switches de Aim Assist y No Recoil
+        setupSwitch(floatingView.findViewById(R.id.switch_aim_assist), "pref_aim_assist", "Aim Assist");
+        setupSwitch(floatingView.findViewById(R.id.switch_no_recoil), "pref_no_recoil", "No Recoil");
     }
 
-    @Override protected void onDetachedFromWindow() {
-        if (anim != null) anim.cancel();
-        super.onDetachedFromWindow();
-    }
-
-    @Override protected void onDraw(Canvas c) {
-        float w = getWidth(), h = getHeight(), s = Math.min(w, h);
-        if (tile) {
-            c.drawRoundRect(0, 0, w, h, s * .22f, s * .22f, bg);
-            bd.setStrokeWidth(s * .045f);
-            c.drawRoundRect(s * .025f, s * .025f, w - s * .025f, h - s * .025f, s * .215f, s * .215f, bd);
+    private void setupSwitch(Switch sw, String key, String featureName) {
+        if (sw != null) {
+            sw.setChecked(prefs.getBoolean(key, false));
+            sw.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                prefs.edit().putBoolean(key, isChecked).apply();
+                Toast.makeText(this, featureName + ": " + (isChecked ? "ON" : "OFF"), Toast.LENGTH_SHORT).show();
+            });
         }
-        c.save();
-        c.translate(w / 2, h / 2);
-        float k = s / (tile ? 222f : 200f);
-        c.scale(k, k);
-        c.save();
-        c.rotate(angle);
-        for (int i = 0; i < 12; i++) {
-            c.drawPath(big, fill);
-            c.drawLine(0, -94, 0, -70, dark);
-            c.save(); c.rotate(15); c.drawPath(small, fill); c.restore();
-            c.rotate(30);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (floatingView != null) {
+            windowManager.removeView(floatingView);
         }
-        c.restore();
-        c.drawCircle(0, 0, 69, disc);
-        c.drawCircle(0, 0, 69, ring3);
-        c.drawCircle(0, 0, 63, ring1);
-        c.drawText("MTH", 1, 1, t1);
-        c.drawText("FAMILY", 2, 17, t2);
-        c.restore();
     }
 }
