@@ -27,11 +27,14 @@ public class FloatingService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        // 1. Inicializar SharedPreferences solo para Aim Assist y No Recoil
+        // 1. Inicializar SharedPreferences ("MthSettings") para guardar los estados
         prefs = getSharedPreferences("MthSettings", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         
+        if (!prefs.contains("pref_aimbot")) editor.putBoolean("pref_aimbot", false);
         if (!prefs.contains("pref_aim_assist")) editor.putBoolean("pref_aim_assist", false);
+        if (!prefs.contains("pref_show_fov")) editor.putBoolean("pref_show_fov", false);
+        if (!prefs.contains("pref_show_line")) editor.putBoolean("pref_show_line", false);
         if (!prefs.contains("pref_no_recoil")) editor.putBoolean("pref_no_recoil", false);
         editor.apply();
 
@@ -57,15 +60,20 @@ public class FloatingService extends Service {
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         windowManager.addView(floatingView, params);
 
-        // 3. Conectar únicamente los switches de Aim Assist y No Recoil
+        // 3. Conectar todos los switches y asegurar guardado inmediato
+        setupSwitch(floatingView.findViewById(R.id.switch_aimbot), "pref_aimbot", "Aimbot");
         setupSwitch(floatingView.findViewById(R.id.switch_aim_assist), "pref_aim_assist", "Aim Assist");
+        setupSwitch(floatingView.findViewById(R.id.switch_show_fov), "pref_show_fov", "Show FOV");
+        setupSwitch(floatingView.findViewById(R.id.switch_show_line), "pref_show_line", "Show Line");
         setupSwitch(floatingView.findViewById(R.id.switch_no_recoil), "pref_no_recoil", "No Recoil");
     }
 
     private void setupSwitch(Switch sw, String key, String featureName) {
         if (sw != null) {
+            // Cargar estado guardado
             sw.setChecked(prefs.getBoolean(key, false));
             sw.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // Guardar el cambio al instante en SharedPreferences
                 prefs.edit().putBoolean(key, isChecked).apply();
                 Toast.makeText(this, featureName + ": " + (isChecked ? "ON" : "OFF"), Toast.LENGTH_SHORT).show();
             });
