@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="#CC000000"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingBottom="8dp"
+        android:text="MTH TEAM AGUS"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <Switch
+        android:id="@+id/switch_aimbot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="4dp"
+        android:text="Aimbot"
+        android:textColor="#FFFFFF" />
+
+    <Switch
+        android:id="@+id/switch_aim_assist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="4dp"
+        android:text="Aim Assist"
+        android:textColor="#FFFFFF" />
+
+    <Switch
+        android:id="@+id/switch_show_fov"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="4dp"
+        android:text="Show FOV"
+        android:textColor="#FFFFFF" />
+
+    <Switch
+        android:id="@+id/switch_show_line"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="4dp"
+        android:text="Show Line"
+        android:textColor="#FFFFFF" />
+
+    <Switch
+        android:id="@+id/switch_no_recoil"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="4dp"
+        android:text="No Recoil"
+        android:textColor="#FFFFFF" />
+
+</LinearLayout>
